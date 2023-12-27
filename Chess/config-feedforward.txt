@@ -1,0 +1,107 @@
+[NEAT]
+# Maximum fitness value a genome must achieve to stop evolution
+fitness_criterion     = max
+# Fitness value that signals a successful genome
+fitness_threshold     = 1.0
+# Population size
+pop_size              = 15
+# Whether to reset the population if all species go extinct
+reset_on_extinction   = False
+
+[DefaultGenome]
+# Number of input nodes
+num_inputs              = 64
+# Number of hidden nodes (0 lets NEAT evolve the count)
+num_hidden              = 0
+# Number of output nodes
+num_outputs             = 64
+# Initial connectivity type
+initial_connection      = full
+# Whether the network should be feed forward
+feed_forward            = True
+# Coefficient for measuring genome compatibility
+compatibility_disjoint_coefficient = 1.0
+compatibility_weight_coefficient   = 0.4
+# Probability of adding a new connection
+conn_add_prob           = 0.1
+# Probability of deleting a connection
+conn_delete_prob        = 0.1
+# Probability of adding a new node
+node_add_prob           = 0.1
+# Probability of deleting a node
+node_delete_prob        = 0.1
+# Default activation function
+activation_default      = relu
+# Options for activation functions
+activation_options      = relu tanh sigmoid
+# Rate of mutating activation
+activation_mutate_rate  = 0.2
+# Default aggregation function
+aggregation_default     = sum
+# Options for aggregation functions
+aggregation_options     = sum mean
+# Rate of mutating aggregation
+aggregation_mutate_rate = 0.2
+# Mean bias value for initialization
+bias_init_mean          = 0.0
+# Standard deviation for bias initialization
+bias_init_stdev         = 1.0
+# Bias replace rate
+bias_replace_rate       = 0.1
+# Bias mutation rate
+bias_mutate_rate        = 0.7
+# Power of bias mutation
+bias_mutate_power       = 0.5
+# Max bias value
+bias_max_value          = 8.0
+# Min bias value
+bias_min_value          = -8.0
+# Mean response for initialization
+response_init_mean      = 1.0
+# Response standard deviation for initialization
+response_init_stdev     = 0.1
+# Response replace rate
+response_replace_rate   = 0.1
+# Response mutation rate
+response_mutate_rate    = 0.1
+# Power of response mutation
+response_mutate_power   = 0.1
+# Max response value
+response_max_value      = 8.0
+# Min response value
+response_min_value      = -8.0
+
+# Max weight value
+weight_max_value        = 8
+# Min weight value
+weight_min_value        = -8
+# Mean weight value for initialization
+weight_init_mean        = 0.0
+# Standard deviation for weight initialization
+weight_init_stdev       = 1.0
+# Weight mutation rate
+weight_mutate_rate      = 0.8
+# Weight replace rate
+weight_replace_rate     = 0.1
+# Power of weight mutation
+weight_mutate_power     = 0.5
+# Default state of connections
+enabled_default         = True
+# Rate of mutating 'enabled' state
+enabled_mutate_rate     = 0.01
+
+[DefaultSpeciesSet]
+# Threshold for species compatibility
+compatibility_threshold = 3.0
+
+[DefaultStagnation]
+# Fitness function for species
+species_fitness_func = max
+# Number of generations with no improvement before species is stagnated
+max_stagnation      = 15
+
+[DefaultReproduction]
+# Number of best genomes per species to carry over without mutation
+elitism            = 2
+# Fraction of the population allowed to reproduce
+survival_threshold = 0.2
