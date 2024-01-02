@@ -13,6 +13,7 @@ import torch.optim as optim
 import random
 from collections import deque
 import os
+import copy
 
 class DQN(nn.Module):
     def __init__(self, input_size, output_size):
@@ -20,11 +21,14 @@ class DQN(nn.Module):
         self.fc = nn.Sequential(
             nn.Linear(input_size, 64),
             nn.ReLU(),
-            nn.Linear(64, 64),
+            nn.Linear(64, 256),
+            nn.ReLU(),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
             nn.ReLU(),
             nn.Linear(64, output_size)
         )
-
     def forward(self, x):
         return self.fc(x)
 
@@ -127,6 +131,7 @@ def play_game_with_network_random(env, net):
 
     while not env.is_game_over():
         board_state = env.get_board_representation()
+        board_state = np.array(board_state)
         
         if env.board.turn == chess.WHITE:
             # It's the network's (white) turn
@@ -149,6 +154,19 @@ def play_game_with_network_random(env, net):
 
     return env.get_game_result() if env.get_game_result() != 'undetermined' else 'draw'
 
+def mutate_weights(model, mutation_strength=0.01):
+    # Copy the original model to ensure that we do not modify it directly
+    new_model = copy.deepcopy(model)
+    
+    # Apply mutation
+    with torch.no_grad():
+        for param in new_model.parameters():
+            # Ensure we only mutate weights and not biases, etc.
+            if len(param.size()) > 0:  
+                mutation = torch.randn_like(param) * mutation_strength
+                param.add_(mutation)
+    return new_model
+
 # Assuming you have an 8x8 board representation with 1 number per square
 input_size = 64
 output_size = 64  # Assuming network output corresponds to move destination square (simplistic approach)
@@ -161,9 +179,27 @@ net = DQN(input_size, output_size)
 
 counter = 49
 iterations = 15
+score = 0
+main_model_score = 0
+mutate = False
+
 for i in range(10000):
-    net.apply(init_weights_general)  # Apply your random weight initializer
-    
+    #net.apply(init_weights_general)  # Apply your random weight initializer
+    if score/100.0 >= .6 or mutate == True:
+        print("mutating", score)
+        mutate = True
+        
+        if score > main_model_score:
+            main_model = copy.deepcopy(net)
+            main_model_score = score
+        else:
+            net = mutate_weights(main_model)
+        
+    else:
+        print("new net")
+        net.apply(init_weights_general)
+        main_model = copy.deepcopy(net)
+        
     # Play a game with this network
     #game_result = play_game_with_network(env, net)
 
@@ -178,9 +214,10 @@ for i in range(10000):
         else:
             draw += 1
     score = ((win+(draw/2)) / iterations) * 100
-    if (win+(draw/2)) / iterations > .7:
+    if (win+(draw/2)) / iterations >= .7:
             torch.save(net.state_dict(), f'chess_{counter}_{score}.pth')
             counter += 1
-    print((win+(draw/2)) / iterations)  
+    #print((win+(draw/2)) / iterations)  
+    print(main_model_score)
                            
     #torch.save(net.state_dict(), f'chess_{counter}.pth')
