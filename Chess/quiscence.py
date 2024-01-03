@@ -288,7 +288,7 @@ class Board:
 # Example usage with a FEN
 fen = "r1bqk1nr/ppp3pp/2np4/8/4P3/2Q2N2/P4PPP/RNB2RK1 w - - 0 11"
 #fen = "r1bqk1nr/ppp3pp/2np4/8/3QP3/5N2/P4PPP/RNB2RK1 b - - 1 11"
-fen = 'rnbqkbnr/p1pppppp/8/8/1pPPP3/8/PP3PPP/RNBQKBNR b KQkq c3 0 3'
+#fen = 'rnbqkbnr/p1pppppp/8/8/1pPPP3/8/PP3PPP/RNBQKBNR b KQkq c3 0 3'
 
 board = Board(fen)
 top_moves = board.top_moves()
