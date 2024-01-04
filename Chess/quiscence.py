@@ -191,7 +191,6 @@ class Board:
         if color == chess.WHITE:
             return pst[piece_type][(7 - square // 8) * 8 + square % 8]
         else:
-            #return pst_np[piece_type][square // 8, 7 - (square % 8)]
             return pst_np[piece_type][square // 8, square % 8]
 
 

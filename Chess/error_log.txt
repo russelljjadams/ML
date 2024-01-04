@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "C:\Users\rjadams\DOCUME~1\MYSTUF~1\ML\Chess\quiscence.py", line 357, in <module>
+    main()
+  File "C:\Users\rjadams\DOCUME~1\MYSTUF~1\ML\Chess\quiscence.py", line 348, in main
+    sys.stdout.flush()
+OSError: [Errno 22] Invalid argument
+Exception ignored in: <_io.TextIOWrapper name='<stdout>' mode='w' encoding='cp1252'>
+OSError: [Errno 22] Invalid argument
