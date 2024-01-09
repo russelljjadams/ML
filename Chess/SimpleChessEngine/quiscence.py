@@ -8,10 +8,6 @@ Created on Mon Jan  1 23:04:30 2024
 import numpy as np
 import chess
 import sys
-import random
-
-import cProfile
-import pstats
 
 PIECE_VALUE = {
     chess.PAWN: 1,
@@ -132,15 +128,16 @@ class Piece:
         # Return the combined base value and pst value
         return self.base_value + self.get_pst_value()
 
+
 class Board:
-    zobrist_table = {}
     def __init__(self, fen):
         self.pieces = []
         self.board = chess.Board(fen)  # Initialize python-chess Board
+
         self.load_fen(fen)
-        
+    
     def move(self, move):
-        self.board.push_uci(move.uci())
+        self.board.push_uci(move)
         
     def to_move(self):
         if 'w' in self.board.fen():
@@ -157,68 +154,33 @@ class Board:
             if self.board.gives_check(move) and not self.board.is_capture(move):
                 checking_moves.append(move)
         return checking_moves
-    
-
-    
-    def alpha_beta_search(self, alpha, beta, depth):   
-        if depth <= 0:
-            return self.quiescence_search(alpha, beta)
-    
-        if self.board.is_game_over():
-            return self.evaluate()
-    
-        moves = list(self.board.legal_moves)
-        moves = order_moves(self.board, moves)
-    
-        first_move = True
-        for move in moves:
-            self.board.push(move)
-    
-            if first_move:
-                score = -self.alpha_beta_search(-beta, -alpha, depth - 1)
-                first_move = False
-            else:
-                score = -self.alpha_beta_search(-alpha - 1, -alpha, depth - 1)
-                if alpha < score < beta:
-                    score = -self.alpha_beta_search(-beta, -alpha, depth - 1)
-            
-            self.board.pop()
-            alpha = max(alpha, score)
-            if alpha >= beta:
-                break  # Beta-cutoff.
-    
-        return alpha
         
     def quiescence_search(self, alpha, beta, depth=0, max_depth=10):
+        # Generate both capturing and checking moves
+        moves = list(self.board.generate_legal_captures())
+        checks = self.generate_checking_moves()
+        moves.extend(checks)
+        
+        # Order moves by the MVV-LVA heuristic
+        ordered_moves = order_moves(self.board, moves) 
+        
+        if not moves or (depth > max_depth):
+            return self.evaluate()
+        
         stand_pat = self.evaluate()
-    
-        # If the game is over (checkmate or draw), return the evaluation immediately
-        if self.board.is_game_over(claim_draw=False):
-            return stand_pat
-    
-        if depth > max_depth:
-            return stand_pat
-    
+        
         if stand_pat >= beta:
             return beta
-    
         if alpha < stand_pat:
-            alpha = stand_pat
+            alpha = stand_pat 
     
-        moves = list(self.board.generate_legal_captures())
-        # checks = self.generate_checking_moves()
-        # moves.extend(checks)
-        # Order moves by the MVV-LVA heuristic
-        moves = order_moves(self.board, moves)
-    
-        for move in moves:
+        for move in ordered_moves:
             self.board.push(move)
             score = -self.quiescence_search(-beta, -alpha, depth + 1)
             self.board.pop()
     
             if score >= beta:
                 return beta
-    
             if score > alpha:
                 alpha = score
     
@@ -229,6 +191,7 @@ class Board:
         if color == chess.WHITE:
             return pst[piece_type][(7 - square // 8) * 8 + square % 8]
         else:
+            #return pst_np[piece_type][square // 8, 7 - (square % 8)]
             return pst_np[piece_type][square // 8, square % 8]
 
 
@@ -263,30 +226,20 @@ class Board:
     
     # Example usage within the evaluation function
     def evaluate(self):
-        # Check if the game is over
-        if self.board.is_game_over():
-            # If the current player's king is in check, it's checkmate
-            is_checkmate = self.board.is_checkmate()
-            if is_checkmate:
-                # Return -infinity if it's the side to move's turn, and infinity if it's opponent's turn
-                return -float('inf')
-            else:
-                # It's a stalemate or draw by insufficient material, etc.
-                return 0  # You may handle different types of draws differently depending on your engine design
-        
         evaluation = 0
         for square in chess.SQUARES:
             piece = self.board.piece_at(square)
             if piece:
+                # Adjust the condition to check the piece and call your piece value function directly
                 piece_value = self.piece_value(piece, square, piece.color)
                 if piece.color == chess.WHITE:
                     evaluation += piece_value
                 else:
                     evaluation -= piece_value
-        
+    
         # Return the evaluation score from the perspective of the side whose turn it is
         return evaluation if self.board.turn == chess.WHITE else -evaluation
-    
+
     def generate_moves(self, quiescence=False):
         # Generate only moves that are captures if quiescence is True
         if quiescence:
@@ -294,28 +247,25 @@ class Board:
         else:
             return list(self.board.generate_legal_moves())
 
-    def top_moves(self, depth=3):
-        if self.board.is_game_over():
-            return []  # No further exploration is needed for the final game state.
-    
-        moves = self.board.legal_moves
-        # Order moves by the MVV-LVA heuristic
-        moves = order_moves(self.board, moves)
+    def top_moves(self):
+        moves = self.generate_moves()
         scored_moves = []
-        
         for move in moves:
+            # Push the move to the board
             self.board.push(move)
             
-            # Use the alpha-beta search instead of the quiescence search, with the provided search depth.
-            score = -self.alpha_beta_search(-float('inf'), float('inf'), (depth - 1))
+            # Evaluate the board state after the move
+            score = -self.quiescence_search(-float('inf'), float('inf'))
             scored_moves.append((move, score))
+            
+            # Undo the move to restore the board to its initial state
             self.board.pop()
-    
+
         # Sort and return the moves by evaluation score
         return sorted(scored_moves, key=lambda x: x[1], reverse=True)
     
     def top_five(self):
-        t = self.top_moves()
+        t = board.top_moves()
         for move, score in t[:5]:
             print(f"Move {move} with score {score}")
 
@@ -324,28 +274,17 @@ class Board:
 #fen = "r1bqk1nr/ppp3pp/2np4/8/4P3/2Q2N2/P4PPP/RNB2RK1 w - - 0 11"
 #fen = "r1bqk1nr/ppp3pp/2np4/8/3QP3/5N2/P4PPP/RNB2RK1 b - - 1 11"
 #fen = 'rnbqkbnr/p1pppppp/8/8/1pPPP3/8/PP3PPP/RNBQKBNR b KQkq c3 0 3'
-#fen = 'rnbqkb1r/p1pppp1p/5np1/1B6/1p1PP3/5N2/PPP2PPP/RNBQK2R w KQkq - 2 5' #problem fen
+fen = 'rnbqkb1r/p1pppp1p/5np1/1B6/1p1PP3/5N2/PPP2PPP/RNBQK2R w KQkq - 2 5' #problem fen
 #fen = 'rnbqkb1r/p1pppp1p/5np1/1B6/1p1PP3/2N2N2/PPP2PPP/R1BQK2R b KQkq - 3 5' #problem2 fen
-#fen = '6Q1/5R2/4B2k/8/3P2P1/8/PB6/6K1 w - - 1 52' #mate in 1
-fen = '8/p3R3/1p6/6p1/5b2/2B2k2/PPr5/6K1 w - - 5 38' #mate inc
-#fen = 'r1bq1rk1/pp2bppp/2n1pn2/8/8/PBN5/1P2NPPP/R1BQ1RK1 w - - 2 13' #wtf
 
-profiler = cProfile.Profile()
-profiler.enable()
+# board = Board(fen)
+# top_moves = board.top_moves()
 
-board = Board(fen)
-top_moves = board.top_moves()
-
-profiler.disable()
-
-print(board.board)
-print(f'The board evaluation is {board.evaluate()}')
-print("Top 5 moves:")
-for move, score in top_moves[:5]:  # Limit to the top 5 moves
-    print(f"Move {move} with score {score}")
-    
-stats = pstats.Stats(profiler).sort_stats('cumulative')
-stats.print_stats()
+# print(board.board)
+# print(f'The board evaluation is {board.evaluate()}')
+# print("Top 5 moves:")
+# for move, score in top_moves[:5]:  # Limit to the top 5 moves
+#     print(f"Move {move} with score {score}")
     
 # fen = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1'
 # board.load_fen(fen)
@@ -413,7 +352,7 @@ def main():
         elif raw_input == "quit":
             break
 
-#Entry point
+# Entry point
 if __name__ == "__main__":
     #pass
     main()

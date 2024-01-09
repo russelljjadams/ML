@@ -1,0 +1,7 @@
+Traceback (most recent call last):
+  File "C:\Users\rjadams\DOCUME~1\MYSTUF~1\ML\Chess\SIMPLE~1\quiscence.py", line 358, in <module>
+    main()
+  File "C:\Users\rjadams\DOCUME~1\MYSTUF~1\ML\Chess\SIMPLE~1\quiscence.py", line 316, in main
+    raw_input = input()
+                ^^^^^^^
+EOFError: EOF when reading a line
