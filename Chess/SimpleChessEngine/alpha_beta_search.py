@@ -189,7 +189,7 @@ class Board:
     
         return alpha
         
-    def quiescence_search(self, alpha, beta, depth=0, max_depth=10):
+    def quiescence_search(self, alpha, beta, depth=0, max_depth=100):
         stand_pat = self.evaluate()
     
         # If the game is over (checkmate or draw), return the evaluation immediately
@@ -294,7 +294,7 @@ class Board:
         else:
             return list(self.board.generate_legal_moves())
 
-    def top_moves(self, depth=3):
+    def top_moves(self, depth=5):
         if self.board.is_game_over(claim_draw=False):
             return []  # No further exploration is needed for the final game state.
     
@@ -342,7 +342,7 @@ fen = '8/p3R3/1p6/6p1/5b2/2B2k2/PPr5/6K1 w - - 5 38' #mate inc
 # print(f'The board evaluation is {board.evaluate()}')
 # print("Top 5 moves:")
 # for move, score in top_moves[:5]:  # Limit to the top 5 moves
-#     print(f"Move {move} with score {score}")
+    # print(f"Move {move} with score {score}")
     
 # stats = pstats.Stats(profiler).sort_stats('cumulative')
 # stats.print_stats()
