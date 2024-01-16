@@ -294,7 +294,7 @@ class Board:
         else:
             return list(self.board.generate_legal_moves())
 
-    def top_moves(self, depth=5):
+    def top_moves(self, depth=4):
         if self.board.is_game_over(claim_draw=False):
             return []  # No further exploration is needed for the final game state.
     

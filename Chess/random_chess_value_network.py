@@ -48,8 +48,9 @@ class ChessEnvironment:
     def get_game_result(self):
         if self.board.is_checkmate():
             return 'win' if self.board.turn else 'loss'
-        elif self.board.is_stalemate() or self.board.can_claim_draw():
+        elif self.board.is_stalemate() or self.board.can_claim_draw() or self.board.is_insufficient_material():
             return 'draw'
+        print(self.board)
         return 'undetermined'
 
     @staticmethod
@@ -125,22 +126,22 @@ env = ChessEnvironment()
 counter = 49
 iterations = 10
 score = 0
-main_model_score = 85
+main_model_score = 95
 mutate = False
 
 #net = ValueNet(input_size)
 
 # Define the path to your saved model
-saved_model_path = '/content/drive/MyDrive/chess_value_net_64_85.00.pth'
+saved_model_path = '/content/drive/MyDrive/chess_value_net_049_95.00.pth'
 
 # Create an instance of your network
-net = ValueNet(input_size)
+main_model = ValueNet(input_size)
 
 # Load the saved model state_dict
 state_dict = torch.load(saved_model_path)
 
 # Apply the loaded state_dict to your model instance
-net.load_state_dict(state_dict)
+main_model.load_state_dict(state_dict)
 
 # Mutate if we loaded from file
 mutate = True
@@ -156,7 +157,7 @@ for game_idx in range(10000):
             main_model = copy.deepcopy(net)
             main_model_score = score
         else:
-            w = np.random.randint(1,80)/100
+            w = np.random.randint(1,88)/100
             net = mutate_weights(main_model,w)
 
     else:
@@ -175,7 +176,7 @@ for game_idx in range(10000):
             draw += 1
 
     score = ((win + (draw / 2)) / iterations) * 100
-    if score >= 85:
+    if score >= 95:
         torch.save(net.state_dict(), f'/content/drive/MyDrive/chess_value_net_{counter}_{score:.2f}.pth')
         counter += 1
 
